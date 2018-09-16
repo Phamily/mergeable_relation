@@ -8,12 +8,12 @@ module Mergeable
       if negated
         merged_where_nots, opts = merge_opts_and_target(opts, merged_where_nots)
         merged_scope = mergeless_scope.parent_where.not(opts, *rest)
-        merged_scope = touch_mergeless_scope(mergeless_scope, merged_scope, :@merged_where_nots, merged_where_nots)
+        merged_scope = touch_mergeless(mergeless_scope, merged_scope, :@merged_where_nots, merged_where_nots)
         merged_scope = merged_scope.parent_where(merged_wheres) if merged_wheres
       else
         merged_wheres, opts = merge_opts_and_target(opts, merged_wheres)
         merged_scope = mergeless_scope.parent_where(opts, *rest)
-        merged_scope = touch_mergeless_scope(mergeless_scope, merged_scope, :@merged_wheres, merged_wheres)
+        merged_scope = touch_mergeless(mergeless_scope, merged_scope, :@merged_wheres, merged_wheres)
         merged_scope = merged_scope.parent_where.not(merged_where_nots) if merged_where_nots
       end
       merged_scope
@@ -21,7 +21,7 @@ module Mergeable
 
   private
 
-    def touch_mergeless_scope(mergeless_scope, merged_scope, merging_symbol, merging_target)
+    def touch_mergeless(mergeless_scope, merged_scope, merging_symbol, merging_target)
       # Set newly merged conditions as an instance variable on mergeless_scope
       # Add mergeless_scope as an instance property on the scope (to be referenced in chained methods)
       mergeless_scope.instance_variable_set(merging_symbol, merging_target) unless merging_target.nil? || merging_target == {}
