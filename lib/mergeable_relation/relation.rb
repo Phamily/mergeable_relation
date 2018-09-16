@@ -1,9 +1,14 @@
 require 'mergeable_relation/helpers'
+require 'mergeable_relation/scope_maintenance'
+
 module Mergeable
   class Relation < ActiveRecord::Relation
+    extend  Mergeable::ScopeMaintenance
     include Mergeable::Helpers
 
     alias_method :parent_where, :where
+
+    update_mergeless_before_scope_methods
 
     class MergedWhereChain < ActiveRecord::Relation::WhereChain
       include Mergeable::Helpers
