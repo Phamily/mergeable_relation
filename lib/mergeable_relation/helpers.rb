@@ -7,14 +7,14 @@ module Mergeable
 
       if negated
         merged_where_nots, opts = merge_opts_and_target(opts, merged_where_nots)
-        merged_scope = mergeless_scope.parent_where.not(opts, *rest)
+        merged_scope = mergeless_scope.super_where.not(opts, *rest)
         merged_scope = touch_mergeless(mergeless_scope, merged_scope, :@merged_where_nots, merged_where_nots)
-        merged_scope = merged_scope.parent_where(merged_wheres) if merged_wheres
+        merged_scope = merged_scope.super_where(merged_wheres) if merged_wheres
       else
         merged_wheres, opts = merge_opts_and_target(opts, merged_wheres)
-        merged_scope = mergeless_scope.parent_where(opts, *rest)
+        merged_scope = mergeless_scope.super_where(opts, *rest)
         merged_scope = touch_mergeless(mergeless_scope, merged_scope, :@merged_wheres, merged_wheres)
-        merged_scope = merged_scope.parent_where.not(merged_where_nots) if merged_where_nots
+        merged_scope = merged_scope.super_where.not(merged_where_nots) if merged_where_nots
       end
       merged_scope
     end
