@@ -7,12 +7,12 @@ module Mergeable
 
       if negated
         merged_where_nots, opts = merge_opts_and_target(opts, merged_where_nots)
-        merged_scope = mergeless_scope.super_where.not(opts, *rest)
+        merged_scope = opts.reduce(mergeless_scope) { |chain, (table, conditions)| chain.super_where.not(conditions) }
         merged_scope = touch_mergeless(mergeless_scope, merged_scope, :@merged_where_nots, merged_where_nots)
         merged_scope = merged_scope.super_where(merged_wheres) if merged_wheres
       else
         merged_wheres, opts = merge_opts_and_target(opts, merged_wheres)
-        merged_scope = mergeless_scope.super_where(opts, *rest)
+        merged_scope = opts.reduce(mergeless_scope) { |chain, (table, conditions)| chain.super_where(conditions) }
         merged_scope = touch_mergeless(mergeless_scope, merged_scope, :@merged_wheres, merged_wheres)
         merged_scope = merged_scope.super_where.not(merged_where_nots) if merged_where_nots
       end
@@ -31,14 +31,20 @@ module Mergeable
 
     def merge_opts_and_target(opts, merging_target)
       merging_target ||= {}
-      opts.each do |column, conditions|
-        if merging_target[column]
-          merging_target[column] = merging_target[column].merge(conditions)
+      conditions_by_table = opts.each_with_object(merging_target) do |(column, conditions), new_opts|
+        new_opts[conditions.table_name] ||= {}
+        if merging_target[conditions.table_name] && merging_target[conditions.table_name][column]
+          merging_target[conditions.table_name][column] = merging_target[conditions.table_name][column].merge(conditions)
+          new_opts[conditions.table_name][column]       = merging_target[conditions.table_name][column].merge(conditions)
         elsif conditions.respond_to?(:merge)
-          merging_target[column] = conditions
+          merging_target[conditions.table_name] ||= {}
+          merging_target[conditions.table_name][column] = conditions
+          new_opts[conditions.table_name][column]       = conditions
+        else
+          new_opts[conditions.table_name][column] = conditions
         end
       end
-      [merging_target, opts.merge!(merging_target)]
+      [merging_target, conditions_by_table]
     end
 
   end
