@@ -15,8 +15,10 @@ module Mergeable
       def not(opts, *rest)
         mergeless = @scope.instance_variable_get :@mergeless_scope
         if opts.is_a?(Hash) && opts.values.all? { |e| e.respond_to?(:merge) }
+          Rails.logger.info("merged_where_chain.not@merged:\n" + merge_opts_wheres_and_not_wheres(mergeless, true, opts, *rest).to_sql)
           merge_opts_wheres_and_not_wheres mergeless, true, opts, *rest
         else
+          Rails.logger.info("merged_where_chain.not@mergeless:\n" + mergeless_scope.super_where.not(opts, *rest).to_sql)
           # Update mergeless_scope to faked result of super
           @scope.instance_variable_set :@mergeless_scope, mergeless.super_where.not(opts, *rest)
           super
@@ -28,7 +30,11 @@ module Mergeable
       def not(opts, *rest)
         # Update mergeless_scope to faked result of super (if merge_where/merge_where.not exist in the chain)
         mergeless = @scope.instance_variable_get(:@mergeless_scope)
-        @scope.instance_variable_set(:@mergeless_scope, mergeless.super_where.not(opts, *rest)) unless mergeless.nil?
+
+        unless mergeless.nil?
+          @scope.instance_variable_set(:@mergeless_scope, mergeless.super_where.not(opts, *rest))
+          Rails.logger.info("merged_where_chain.not@mergeless:\n" + mergeless_scope.super_where.not(opts, *rest).to_sql)
+        end
         super
       end
     end
@@ -43,6 +49,9 @@ module Mergeable
       else
         # Update mergeless_scope to faked result of super
         @mergeless_scope = @mergeless_scope.super_where(opts, *rest)
+
+        Rails.logger.info("merge_chain.where@mergeless:\n" + @mergeless_scope.to_sql)
+
         super
       end
     end
@@ -55,9 +64,12 @@ module Mergeable
       elsif opts.blank?
         self
       elsif opts.is_a?(Hash) && opts.values.all? { |e| e.respond_to?(:merge) }
+        Rails.logger.info("merge_chain.merge_where@merged:\n" + merge_opts_wheres_and_not_wheres(@mergeless_scope, false, opts, *rest).to_sql)
+
         merge_opts_wheres_and_not_wheres @mergeless_scope, false, opts, *rest
       else
         @mergeless_scope = @mergeless_scope.super_where(opts, *rest)
+        Rails.logger.info("merge_chain.merge_where@mergeless:\n" + @mergeless_scope.to_sql)
         super_where(opts, *rest)
       end
     end
