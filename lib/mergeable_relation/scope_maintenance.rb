@@ -1,7 +1,7 @@
 module Mergeable
   module ScopeMaintenance
     def update_mergeless_before_scope_methods
-      (ActiveRecord::Relation::VALUE_METHODS + [:merge]).each { |method_name| inject_touch_mergeless(method_name) }
+      (ActiveRecord::Relation::VALUE_METHODS - [:skip_query_cache] - [:reordering] + [:skip_query_cache!, :merge]).each { |method_name| inject_touch_mergeless(method_name) }
     end
 
   private
